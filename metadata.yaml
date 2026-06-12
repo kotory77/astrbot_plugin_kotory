@@ -3,4 +3,4 @@ display_name: Kotory 插件 # 用于展示的名字，可以是方便人类阅�
 desc: Kotory 插件示例。 # 插件简短描述
 version: v1.1.0 # 插件版本号。格式：v1.1.1 或者 v1.1
 author: Kotory77 # 作者
-repo: https://github.com/kotory77/astrbot_plugin_kotory # 插件的仓库地址
+repo: https://github.com/kotory77/astrbot_plugin_kotory/tree/feature # 插件的仓库地址
