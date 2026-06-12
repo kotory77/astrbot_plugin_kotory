@@ -1,12 +1,16 @@
+from typing import List, Dict, Optional
+
 from astrbot.api.event import filter, AstrMessageEvent, MessageEventResult
 from astrbot.api.star import Context, Star, register
 from astrbot.api import logger
 
-@register("helloworld", "kotory77", "一个简单的 Hello World 插件", "1.0.0")
+@register("astrbot_plugin_kotory", "kotory77", "一个简单的 Hello World 插件", "1.0.0")
 class MyPlugin(Star):
-    def __init__(self, context: Context):
+    def __init__(self, context: Context,config: Optional[Dict] = None):
         super().__init__(context)
-
+        self.config = config if config else {}
+        self.functions: List[str] = self.config.get("functions", [])
+        
     async def initialize(self):
         """可选择实现异步的插件初始化方法，当实例化该插件类之后会自动调用该方法。"""
 
@@ -19,6 +23,16 @@ class MyPlugin(Star):
         message_chain = event.get_messages() # 用户所发的消息的消息链 # from astrbot.api.message_components import *
         logger.info(message_chain)
         yield event.plain_result(f"Hello, {user_name}, 你发了 {message_str}!") # 发送一条纯文本消息
+
+    @filter.command("功能")
+    async def func(self, event: AstrMessageEvent):
+        """这是一个 function 指令"""  # 这是 function 功能，可以查看能使用哪些功能
+        if self.functions:
+            # 将每个功能用换行符连接，在一个消息框内显示
+            functions_list = "\n".join(self.functions)
+            yield event.plain_result(f"可用功能:\n{functions_list}")
+        else:
+            yield event.plain_result("暂无可使用的功能")
 
     async def terminate(self):
         """可选择实现异步的插件销毁方法，当插件被卸载/停用时会调用。"""
