@@ -7,12 +7,16 @@ from astrbot.api import logger
 from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import AiocqhttpMessageEvent
 import astrbot.api.message_components as Comp
 
+from .group_member_store import GroupMemberStore
+
 @register("astrbot_plugin_kotory", "kotory77", "一个简单的 Hello World 插件", "1.0.0")
 class MyPlugin(Star):
     def __init__(self, context: Context,config: Optional[Dict] = None):
         super().__init__(context)
         self.config = config if config else {}
         self.functions: List[str] = self.config.get("functions", [])
+        self.member_store = GroupMemberStore()
+        self.member_store = GroupMemberStore()
         
     async def initialize(self):
         """可选择实现异步的插件初始化方法，当实例化该插件类之后会自动调用该方法。"""
@@ -42,19 +46,38 @@ class MyPlugin(Star):
     async def random_person(self, event: AstrMessageEvent):
         """这是一个随机抽人 指令"""  # 这是 function 功能，可以随机抽一个人
         try:
-            group_id = event.get_group_id()
+            group_id = str(event.get_group_id())
         except:
-            yield event.plain_result(f"获取出错!")
+            yield event.plain_result(f"获取群号出错!")
             event.stop_event()
+            return
 
-        if event.get_platform_name() == "aiocqhttp":
-            assert isinstance(event, AiocqhttpMessageEvent)
-            client = event.bot  # 得到 client
-            payloads = {
-                "group_id": group_id,
-                "no_cache": True
-            }
-            ret = await client.api.call_action('get_group_member_list', **payloads)  # 调用 协议端  API
+        # 检查缓存是否有效
+        if self.member_store.is_cache_valid(group_id):
+            ret = self.member_store.get_group_members(group_id)
+            if not ret:
+                # 缓存标记有效但数据为空，重新获取
+                need_fetch = True
+            else:
+                yield event.plain_result("使用缓存数据")
+                need_fetch = False
+        else:
+            need_fetch = True
+
+        # 需要重新获取群成员列表
+        if need_fetch:
+            if event.get_platform_name() == "aiocqhttp":
+                assert isinstance(event, AiocqhttpMessageEvent)
+                client = event.bot  # 得到 client
+                payloads = {
+                    "group_id": int(group_id),
+                    "no_cache": True
+                }
+                ret = await client.api.call_action('get_group_member_list', **payloads)  # 调用 协议端  API
+                
+                # 保存到文件
+                self.member_store.save_group_members(group_id, ret)
+                yield event.plain_result("已更新群成员信息")
 
         length = len(ret)
         num = random.randint(0, length - 1)
