@@ -59,7 +59,7 @@ class MyPlugin(Star):
                 # 缓存标记有效但数据为空，重新获取
                 need_fetch = True
             else:
-                yield event.plain_result("使用缓存数据")
+                # yield event.plain_result("使用缓存数据")
                 need_fetch = False
         else:
             need_fetch = True
@@ -77,7 +77,7 @@ class MyPlugin(Star):
                 
                 # 保存到文件
                 self.member_store.save_group_members(group_id, ret)
-                yield event.plain_result("已更新群成员信息")
+                #yield event.plain_result("已更新群成员信息")
 
         length = len(ret)
         num = random.randint(0, length - 1)
